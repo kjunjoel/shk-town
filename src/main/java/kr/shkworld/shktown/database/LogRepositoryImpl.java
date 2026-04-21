@@ -1,8 +1,9 @@
 package kr.shkworld.shktown.database;
 
+import kr.shkworld.shktown.core.model.AccountType;
 import kr.shkworld.shktown.core.model.EconomyLog;
+import kr.shkworld.shktown.core.model.LogType;
 import kr.shkworld.shktown.core.repository.LogRepository;
-import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.math.BigDecimal;
@@ -12,73 +13,107 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class LogRepositoryImpl implements LogRepository {
     private final JavaPlugin plugin;
+    private final Executor logExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread thread = new Thread(r, "Log-Worker-Thread");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     public LogRepositoryImpl(JavaPlugin plugin) {
         this.plugin = plugin;
     }
 
     @Override
-    public void insertLog(String logType, String targetID, String message, String dataJson) {
-        String sql = "INSERT INTO system_logs (log_type, target_id, message, detail_data, created_at) " +
-                     "VALUES (?, ?, ?, ?, NOW())";
+    public CompletableFuture<Void> saveEconomyLog(AccountType type, String targetID, String accountNumber, BigDecimal amount, BigDecimal balanceAfter, Enum<?> reason, String detail) {
+        return CompletableFuture.runAsync(() -> {
+            String sql = "INSERT INTO economy_logs (asset_type, target_id, account_number, amount, balance_after, reason, detail) " +
+                         "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-        executeAsync(sql, logType, targetID, message, dataJson);
-    }
+            try (Connection conn = DatabaseManager.getInstance().getConnection();
+                 PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+                preparedStatement.setInt(1, type.getCode());
+                preparedStatement.setString(2, targetID);
+                preparedStatement.setString(3, accountNumber);
+                preparedStatement.setBigDecimal(4, amount);
+                preparedStatement.setBigDecimal(5, balanceAfter);
+                preparedStatement.setString(6, reason.name());
+                preparedStatement.setString(7, detail);
+                preparedStatement.executeUpdate();
 
-    @Override
-    public void insertLogEconomy(String uuid, String accountNumber, String action, BigDecimal amount, String reason) {
-        String sql = "INSERT INTO economy_logs (target_id, account_number, action_type, amount, reason, created_at) "+
-                     "VALUES (?, ?, ?, ?, ?, NOW())";
+            } catch (SQLException e) {
+                plugin.getLogger().severe("DB에 " + targetID +"님의 경제 관련 로그를 저장하던 중 오류가 발생하였습니다.\n" + e.getMessage());
+                throw new CompletionException(e);
 
-        executeAsync(sql, uuid, accountNumber, action, amount, reason);
-    }
-
-    @Override
-    public List<EconomyLog> findRecentEconomyLogs(String accountNumber, int limit) {
-        String sql = "SELECT * FROM economy_logs WHERE account_number = ? ORDER BY created_at DESC LIMIT ?";
-        List<EconomyLog> logs = new ArrayList<>();
-
-        try (Connection conn = DatabaseManager.getInstance().getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, accountNumber);
-            pstmt.setInt(2, limit);
-
-            ResultSet rs = pstmt.executeQuery();
-            while (rs.next()) {
-                logs.add(new EconomyLog(
-                        rs.getLong("id"),
-                        rs.getString("target_id"),
-                        rs.getString("account_number"),
-                        rs.getString("action_type"),
-                        rs.getBigDecimal("amount"),
-                        rs.getString("reason"),
-                        rs.getTimestamp("created_at").toLocalDateTime()
-                ));
             }
-        } catch (SQLException e) {
-            plugin.getLogger().severe("로그 조회 중 오류 발생: " + e.getMessage());
-        }
-
-        return logs;
+        }, logExecutor);
     }
 
-    private void executeAsync(String sql, Object... params) {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            try (Connection connection = DatabaseManager.getInstance().getConnection();
-                 PreparedStatement pstmt = connection.prepareStatement(sql)) {
+    @Override
+    public CompletableFuture<Void> saveSystemLog(LogType type, String message, String dataJson) {
+        return CompletableFuture.runAsync(() -> {
+            String sql = "INSERT INTO system_logs (log_type, message, data_json) " +
+                         "VALUES (?, ?, ?)";
 
-                for (int i = 0; i < params.length; i++) {
-                    pstmt.setObject(i + 1, params[i]);
+            try (Connection conn = DatabaseManager.getInstance().getConnection();
+                 PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+                preparedStatement.setString(1, type.name());
+                preparedStatement.setString(2, message);
+                preparedStatement.setString(3, dataJson);
+                preparedStatement.executeUpdate();
+
+            } catch (SQLException e) {
+                plugin.getLogger().severe("DB에 " + type.name() + "관련 시스템 관련 로그를 저장하던 중 오류가 발생하였습니다.\n" + e.getMessage());
+                throw new CompletionException(e);
+
+            }
+        }, logExecutor);
+    }
+
+    @Override
+    public CompletableFuture<List<EconomyLog>> findRecentEconomyLogs(String targetID, AccountType type, int limit) {
+        return CompletableFuture.supplyAsync(() -> {
+            List<EconomyLog> economyLogs = new ArrayList<>();
+            String sql = "SELECT * " +
+                         "FROM economy_logs " +
+                         "WHERE asset_type = ? AND target_id = ? " +
+                         "ORDER BY created_at DESC " +
+                         "LIMIT ?";
+
+            try (Connection conn = DatabaseManager.getInstance().getConnection();
+                 PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+                preparedStatement.setInt(1, type.getCode());
+                preparedStatement.setString(2, targetID);
+                preparedStatement.setInt(3, limit);
+
+                try (ResultSet rs = preparedStatement.executeQuery()) {
+                    while (rs.next()) {
+                        economyLogs.add(new EconomyLog(
+                                rs.getLong("id"),
+                                type,
+                                targetID,
+                                rs.getString("account_number"),
+                                rs.getBigDecimal("amount"),
+                                rs.getBigDecimal("balance_after"),
+                                rs.getString("reason"),
+                                rs.getString("detail"),
+                                rs.getTimestamp("created_at").toLocalDateTime()
+                        ));
+                    }
                 }
 
-                pstmt.executeUpdate();
             } catch (SQLException e) {
-                plugin.getLogger().severe("DB 비동기 저장 중 오류 발생: " + e.getMessage());
+                plugin.getLogger().severe("DB에서 " + targetID + "의 경제 로그를 검색하던 중 오류가 발생하였습니다.\n" + e.getMessage());
+                throw new CompletionException(e);
+
             }
+            return economyLogs;
         });
     }
 }

@@ -9,18 +9,22 @@ version = "1.0-SNAPSHOT"
 repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://jitpack.io")
 }
 
 dependencies {
     implementation("com.zaxxer:HikariCP:7.0.2")
     implementation("com.mysql:mysql-connector-j:9.6.0")
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    compileOnly ("com.github.MilkBowl:VaultAPI:1.7") {
+        exclude("org.bukkit", "bukkit")
+    }
 }
 
 tasks {
     shadowJar {
-        archiveFileName.set("SHKTown.jar")
-        destinationDirectory.set(file("../test_server/plugins"))
+        //archiveFileName.set("SHKTown.jar")
+        //destinationDirectory.set(file("../test_server/plugins"))
 
         relocate("com.zaxxer.hikari", "kr.shkworld.shktown.libs.hikari")
         relocate("com.mysql", "kr.shkworld.shktown.libs.mysql")

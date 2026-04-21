@@ -1,10 +1,12 @@
 package kr.shkworld.shktown.core.service.impl;
 
+import kr.shkworld.shktown.core.model.Account;
 import kr.shkworld.shktown.core.model.User;
+import kr.shkworld.shktown.core.repository.AccountRepository;
 import kr.shkworld.shktown.core.repository.UserRepository;
 import kr.shkworld.shktown.core.service.UserService;
+import kr.shkworld.shktown.core.util.PluginLogger;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,10 +16,20 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
+    private final PluginLogger pluginLogger;
+
     private final Map<UUID, User> onlineUsers = new ConcurrentHashMap<>();
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, AccountRepository accountRepository, PluginLogger pluginLogger) {
         this.userRepository = userRepository;
+        this.accountRepository = accountRepository;
+        this.pluginLogger = pluginLogger;
+    }
+
+    @Override
+    public User getUserFromCache(UUID uuid) {
+        return onlineUsers.get(uuid);
     }
 
     @Override
@@ -26,37 +38,66 @@ public class UserServiceImpl implements UserService {
             return CompletableFuture.completedFuture(Optional.of(onlineUsers.get(uuid)));
         }
 
-        return CompletableFuture.supplyAsync(() -> {
-            Optional<User> user = userRepository.loadUserFromDB(uuid);
-            user.ifPresent(u -> onlineUsers.put(uuid, u));
-            return user;
+        CompletableFuture<Optional<User>> userFuture = userRepository.loadUser(uuid);
+        CompletableFuture<List<Account>> accountsFuture = accountRepository.findAllByOwner(uuid);
+
+        return userFuture.thenCombine(accountsFuture, (userOpt, accounts) -> {
+            userOpt.ifPresent(user -> {
+                accounts.forEach(user::addAccount);
+                loadUser(user);
+            });
+            return userOpt;
+        }).exceptionally(throwable -> {
+            pluginLogger.severe("유저를 불러오던 중 오류가 발생하였습니다.\n" + throwable.getCause());
+            return Optional.empty();
         });
     }
 
     @Override
-    public Collection<User> getOnlineUsers() {
-        return onlineUsers.values();
+    public void updateName(UUID uuid, String name) {
+        if (!onlineUsers.containsKey(uuid)) return;
+
+        User user = onlineUsers.get(uuid);
+        user.setName(name);
+        saveUser(user);
     }
 
     @Override
-    public CompletableFuture<Optional<User>> getUserByAccountNumber(String accountNumber) {
-        return userRepository.findUUIDByAccountNumber(accountNumber)
-                .thenCompose(uuidOpt -> {
-                    if (uuidOpt.isPresent()) {
-                        return getUserAsync(uuidOpt.get());
-                    }
-                    return CompletableFuture.completedFuture(Optional.empty());
-                });
+    public void updateAffiliation(UUID uuid, long townID, long nationID) {
+        if (!onlineUsers.containsKey(uuid)) return;
+
+        User user = onlineUsers.get(uuid);
+        user.setTownID(townID);
+        user.setNationID(nationID);
+        saveUser(user);
     }
 
     @Override
-    public void saveUser(User user) {
+    public CompletableFuture<Void> saveUser(User user) {
+        return userRepository.saveUser(user);
+    }
+
+    @Override
+    public void saveAllSync() {
+        pluginLogger.info("모든 유저 데이터를 DB에 저장합니다.");
+        getOnlineUsers().values().forEach(user -> {
+            userRepository.saveUserSync(user);
+            user.getAccounts().values().forEach(accountRepository::saveAccountSync);
+        });
+    }
+
+    @Override
+    public void loadUser(User user) {
         onlineUsers.put(user.getUUID(), user);
-        userRepository.saveToDB(user);
     }
 
     @Override
     public void unloadUser(UUID uuid) {
         onlineUsers.remove(uuid);
+    }
+
+    @Override
+    public Map<UUID, User> getOnlineUsers() {
+        return onlineUsers;
     }
 }

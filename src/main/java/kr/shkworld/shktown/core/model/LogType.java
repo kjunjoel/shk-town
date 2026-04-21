@@ -4,6 +4,7 @@ public enum LogType {
     ECONOMY("금전"),
     ADMIN("관리자"),
     ACCESS("접속"),
+    ERROR("오류"),
     EVENT("이벤트"),
     ;
 
