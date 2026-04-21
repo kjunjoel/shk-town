@@ -16,12 +16,10 @@ import java.util.Objects;
 import static org.bukkit.Bukkit.getOfflinePlayer;
 
 public class VaultEconomyProvider implements Economy {
-    private final UserService userService;
     private final AccountService accountService;
     private final EconomyService economyService;
 
-    public VaultEconomyProvider(UserService userService, AccountService accountService, EconomyService economyService) {
-        this.userService = userService;
+    public VaultEconomyProvider(AccountService accountService, EconomyService economyService) {
         this.accountService = accountService;
         this.economyService = economyService;
     }

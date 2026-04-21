@@ -3,6 +3,8 @@ version: 1.0
 main: kr.shkworld.shktown.SHKTown
 api-version: 1.21
 
+soft-depend: [Vault]
+
 commands:
   돈:
     description: 플레이어가 가진 돈을 확인합니다.

@@ -20,7 +20,9 @@ import kr.shkworld.shktown.database.DatabaseManager;
 import kr.shkworld.shktown.database.EconomyRepositoryImpl;
 import kr.shkworld.shktown.database.LogRepositoryImpl;
 import kr.shkworld.shktown.database.UserRepositoryImpl;
+import kr.shkworld.shktown.integration.VaultEconomyProvider;
 import kr.shkworld.shktown.listener.PlayerJoinListener;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class SHKTown extends JavaPlugin {
@@ -75,6 +77,18 @@ public class SHKTown extends JavaPlugin {
         );
 
         new CommandManager(this).registerCommands();
+
+        if (getServer().getPluginManager().getPlugin("Vault") == null) {
+            pluginLogger.severe("Vault 플러그인을 찾을 수 없습니다! 경제 연동이 비활성화됩니다.");
+            return;
+        }
+
+        getServer().getServicesManager().register(
+                net.milkbowl.vault.economy.Economy.class,
+                new VaultEconomyProvider(accountService, economyService),
+                this,
+                ServicePriority.Highest
+        );
 
         getLogger().info("SHK TOWN 플러그인이 성공적으로 활성화되었습니다!");
     }
