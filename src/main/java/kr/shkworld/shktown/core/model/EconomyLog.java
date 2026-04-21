@@ -18,7 +18,7 @@ public record EconomyLog(
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("M/d HH:mm");
 
     public String getFormattedLog() {
-        String color = amount.compareTo(BigDecimal.ZERO) > 0 ? "§a+" : "§c-";
+        String color = amount.compareTo(BigDecimal.ZERO) > 0 ? "§a+" : "§c";
         String unit = (assetType == AccountType.CASH) ? "캐시" : "원";
         String description = resolveDescription();
 

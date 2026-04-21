@@ -19,12 +19,20 @@ dependencies {
     compileOnly ("com.github.MilkBowl:VaultAPI:1.7") {
         exclude("org.bukkit", "bukkit")
     }
+
+    testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:6.0.3")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.0.3")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.108.0")
+    testImplementation("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    testImplementation("org.mockito:mockito-core:5.23.0")
 }
 
 tasks {
     shadowJar {
-        //archiveFileName.set("SHKTown.jar")
-        //destinationDirectory.set(file("../test_server/plugins"))
+        archiveFileName.set("SHKTown.jar")
+        destinationDirectory.set(file("../test_server/plugins"))
 
         relocate("com.zaxxer.hikari", "kr.shkworld.shktown.libs.hikari")
         relocate("com.mysql", "kr.shkworld.shktown.libs.mysql")
@@ -33,6 +41,10 @@ tasks {
     build {
         dependsOn(shadowJar)
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 java {

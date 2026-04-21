@@ -1,9 +1,6 @@
 package kr.shkworld.shktown.command;
 
 import kr.shkworld.shktown.SHKTown;
-import kr.shkworld.shktown.core.service.EconomyService;
-import kr.shkworld.shktown.core.service.LogService;
-import kr.shkworld.shktown.core.service.UserService;
 import org.bukkit.command.CommandExecutor;
 
 public class CommandManager {
