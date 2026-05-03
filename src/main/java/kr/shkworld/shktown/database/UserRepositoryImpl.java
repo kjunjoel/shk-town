@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -82,62 +83,65 @@ public class UserRepositoryImpl implements UserRepository {
                 }
 
             } catch (SQLException e) {
-                plugin.getLogger().severe("DB에서 UUID" + uuid.toString() +" 의 데이터를 불러오던 중 오류가 발생하였습니다.\n" + e.getMessage());
+                plugin.getLogger().severe("DB에서 UUID " + uuid.toString() + "의 데이터를 불러오던 중 오류가 발생하였습니다.\n" + e.getMessage());
                 throw new CompletionException(e);
 
             }
             return Optional.empty();
         });
     }
-    /*
-
+    
     @Override
-    public CompletableFuture<List<RankEntry>> getTopRanksAsync(AccountType type, int page) {
+    public CompletableFuture<List<UUID>> findUUIDsByTownID(long townID) {
         return CompletableFuture.supplyAsync(() -> {
-           int limit = 10;
-           int offset = (page - 1) * limit;
-           List<RankEntry> rankList = new ArrayList<>();
+            String sql = "SELECT uuid " +
+                         "FROM users " +
+                         "WHERE town_id = ?";
+            List<UUID> list = new ArrayList<>();
 
-            String sql = (type == null)
-                    ? "SELECT u.name, SUM(a.balance) as total " +
-                      "FROM accounts a "+
-                      "JOIN users u ON a.owner_uuid = u.uuid " +
-                      "GROUP BY a.owner_uuid " +
-                      "ORDER BY total DESC LIMIT ? OFFSET ?"
-                    : "SELECT u.name, SUM(a.balance) as total " +
-                      "FROM accounts a "+
-                      "JOIN users u ON a.owner_uuid = u.uuid " +
-                      "WHERE a.account_type = ? " +
-                      "GROUP BY a.owner_uuid " +
-                      "ORDER BY total DESC LIMIT ? OFFSET ?";
+            try (Connection conn = DatabaseManager.getInstance().getConnection();
+                 PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+                preparedStatement.setLong(1, townID);
 
-           try (Connection conn = DatabaseManager.getInstance().getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                try (ResultSet rs = preparedStatement.executeQuery()) {
+                    while (rs.next()) {
+                        list.add(UUID.fromString(rs.getString("uuid")));
+                    }
+                }
 
-               if (type == null) {
-                   pstmt.setInt(1, limit);
-                   pstmt.setInt(2, offset);
-               } else {
-                   pstmt.setInt(1, type.getCode());
-                   pstmt.setInt(2, limit);
-                   pstmt.setInt(3, offset);
-               }
+            } catch (SQLException e) {
+                plugin.getLogger().severe("DB에서 마을 ID " + townID + "의 데이터를 불러오던 중 오류가 발생하였습니다.\n" + e.getMessage());
+                throw new CompletionException(e);
 
-               try (ResultSet rs = pstmt.executeQuery()) {
-                   while (rs.next()) {
-                       String playerName = rs.getString("name");
-                       BigDecimal amount = rs.getBigDecimal("total");
-
-                       if (playerName == null) playerName = "알 수 없는 유저";
-
-                       rankList.add(new RankEntry(playerName, amount));
-                   }
-               }
-           } catch (SQLException e) {
-               plugin.getLogger().severe("자산 순위 DB에서 로드 중 오류 발생: " + e.getMessage());
-           }
-           return rankList;
+            }
+            return list;
         });
     }
-    */
+
+    @Override
+    public CompletableFuture<List<UUID>> findUUIDsByNationID(long nationID) {
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "SELECT uuid " +
+                         "FROM users " +
+                         "WHERE nation_id = ?";
+            List<UUID> list = new ArrayList<>();
+
+            try (Connection conn = DatabaseManager.getInstance().getConnection();
+                 PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+                preparedStatement.setLong(1, nationID);
+
+                try (ResultSet rs = preparedStatement.executeQuery()) {
+                    while (rs.next()) {
+                        list.add(UUID.fromString(rs.getString("uuid")));
+                    }
+                }
+
+            } catch (SQLException e) {
+                plugin.getLogger().severe("DB에서 국가 ID " + nationID + "의 데이터를 불러오던 중 오류가 발생하였습니다.\n" + e.getMessage());
+                throw new CompletionException(e);
+
+            }
+            return list;
+        });
+    }
 }

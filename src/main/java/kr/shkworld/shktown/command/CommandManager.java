@@ -14,6 +14,8 @@ public class CommandManager {
         MoneyCommand moneyCommand = new MoneyCommand(this.plugin);
         register("돈", moneyCommand);
         register("마을", new TownCommand());
+        register("송금", new TransferCommand(plugin));
+        register("재산", moneyCommand);
         register("캐시", moneyCommand);
     }
 

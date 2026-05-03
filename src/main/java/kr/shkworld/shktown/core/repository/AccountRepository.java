@@ -1,7 +1,6 @@
 package kr.shkworld.shktown.core.repository;
 
 import kr.shkworld.shktown.core.model.Account;
-import kr.shkworld.shktown.core.model.AccountType;
 
 import java.util.List;
 import java.util.Optional;

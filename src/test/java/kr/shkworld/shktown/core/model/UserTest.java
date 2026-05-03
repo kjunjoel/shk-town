@@ -1,6 +1,5 @@
 package kr.shkworld.shktown.core.model;
 
-import org.checkerframework.checker.units.qual.N;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

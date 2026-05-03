@@ -2,6 +2,7 @@ package kr.shkworld.shktown.core.service;
 
 import kr.shkworld.shktown.core.model.User;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,7 +36,7 @@ public interface UserService {
      * @param townID 바꿀 마을 ID
      * @param nationID 바꿀 국가 ID
      */
-    void updateAffiliation(UUID uuid, long townID, long nationID);
+    CompletableFuture<Void> updateAffiliation(UUID uuid, long townID, long nationID);
 
     /**
      * 유저를 DB에 저장합니다.
@@ -51,4 +52,18 @@ public interface UserService {
     void loadUser(User user);
     void unloadUser(UUID uuid);
     Map<UUID, User> getOnlineUsers();
+
+    /**
+     * 마을 ID로 마을원을 찾습니다.
+     * @param townID 마을 ID
+     * @return 마을원의 UUID 목록
+     */
+    CompletableFuture<List<UUID>> findTownMembersByID(long townID);
+
+    /**
+     * 국가 ID로 국가원을 찾습니다.
+     * @param nationID 국가 ID
+     * @return 국가원의 UUID 목록
+     */
+    CompletableFuture<List<UUID>> findNationMembersByID(long nationID);
 }

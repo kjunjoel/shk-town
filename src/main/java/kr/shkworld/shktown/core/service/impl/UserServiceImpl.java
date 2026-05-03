@@ -63,13 +63,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateAffiliation(UUID uuid, long townID, long nationID) {
-        if (!onlineUsers.containsKey(uuid)) return;
+    public CompletableFuture<Void> updateAffiliation(UUID uuid, long townID, long nationID) {
+        return getUserAsync(uuid).thenCompose(optUser -> {
+            if (optUser.isEmpty()) {
+                pluginLogger.warning("존재하지 않는 유저의 소속을 업데이트 할 수 없습니다: " + uuid);
+                return CompletableFuture.completedFuture(null);
+            }
 
-        User user = onlineUsers.get(uuid);
-        user.setTownID(townID);
-        user.setNationID(nationID);
-        saveUser(user);
+            User user = optUser.get();
+            user.setTownID(townID);
+            user.setNationID(nationID);
+            return saveUser(user);
+        });
     }
 
     @Override
@@ -99,5 +104,15 @@ public class UserServiceImpl implements UserService {
     @Override
     public Map<UUID, User> getOnlineUsers() {
         return onlineUsers;
+    }
+
+    @Override
+    public CompletableFuture<List<UUID>> findTownMembersByID(long townID) {
+        return userRepository.findUUIDsByTownID(townID);
+    }
+
+    @Override
+    public CompletableFuture<List<UUID>> findNationMembersByID(long nationID) {
+        return userRepository.findUUIDsByNationID(nationID);
     }
 }
