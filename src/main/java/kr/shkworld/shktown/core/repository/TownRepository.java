@@ -18,7 +18,7 @@ public interface TownRepository {
      * @param uuid 마을 UUID
      * @return 마을 비동기 Optional 객체
      */
-    CompletableFuture<Optional<Town>> findByUUID(String name);
+    CompletableFuture<Optional<Town>> findByUUID(String uuid);
 
     /**
      * 마을 이름을 이용해 마을 객체를 비동기적으로 찾습니다.

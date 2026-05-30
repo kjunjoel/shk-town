@@ -1,4 +1,4 @@
-package kr.shkworld.shktown.core.model.wealth;
+package kr.shkworld.shktown.core.economy.wealth;
 
 import kr.shkworld.shktown.core.model.AccountType;
 

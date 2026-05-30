@@ -1,4 +1,4 @@
-package kr.shkworld.shktown.database;
+package kr.shkworld.shktown.database.repository;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,6 +15,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import kr.shkworld.shktown.core.model.Town;
 import kr.shkworld.shktown.core.repository.TownRepository;
+import kr.shkworld.shktown.database.DatabaseManager;
 
 public class TownRepositoryImpl implements TownRepository {
     private final JavaPlugin plugin;

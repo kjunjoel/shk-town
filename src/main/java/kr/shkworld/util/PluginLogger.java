@@ -1,4 +1,4 @@
-package kr.shkworld.shktown.core.util;
+package kr.shkworld.util;
 
 public interface PluginLogger {
     void info(String message);

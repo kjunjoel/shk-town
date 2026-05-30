@@ -10,6 +10,7 @@ repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://jitpack.io")
+    maven("https://maven.enginehub.org/repo/")
 }
 
 dependencies {
@@ -19,6 +20,8 @@ dependencies {
     compileOnly ("com.github.MilkBowl:VaultAPI:1.7") {
         exclude("org.bukkit", "bukkit")
     }
+    compileOnly("net.luckperms:api:5.5")
+    compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.14")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.3")
     testImplementation("org.junit.jupiter:junit-jupiter-params:6.0.3")

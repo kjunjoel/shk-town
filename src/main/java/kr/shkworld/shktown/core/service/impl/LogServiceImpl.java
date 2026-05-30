@@ -5,8 +5,7 @@ import kr.shkworld.shktown.core.model.EconomyLog;
 import kr.shkworld.shktown.core.model.LogType;
 import kr.shkworld.shktown.core.repository.LogRepository;
 import kr.shkworld.shktown.core.service.LogService;
-import kr.shkworld.shktown.core.util.PluginLogger;
-import org.jetbrains.annotations.Nullable;
+import kr.shkworld.util.PluginLogger;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -24,7 +23,7 @@ public class LogServiceImpl implements LogService {
     }
 
     @Override
-    public CompletableFuture<Void> logEconomy(AccountType type, String targetID, @Nullable String accountNumber, BigDecimal amount, BigDecimal balanceAfter, Enum<?> reason, String detail) {
+    public CompletableFuture<Void> logEconomy(AccountType type, String targetID, String accountNumber, BigDecimal amount, BigDecimal balanceAfter, Enum<?> reason, String detail) {
         try {
             return logRepository.saveEconomyLog(type, targetID, accountNumber, amount, balanceAfter, reason, detail);
         } catch (Exception ex) {

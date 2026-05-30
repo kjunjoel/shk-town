@@ -5,7 +5,7 @@ import kr.shkworld.shktown.core.model.User;
 import kr.shkworld.shktown.core.repository.AccountRepository;
 import kr.shkworld.shktown.core.repository.UserRepository;
 import kr.shkworld.shktown.core.service.UserService;
-import kr.shkworld.shktown.core.util.PluginLogger;
+import kr.shkworld.util.PluginLogger;
 
 import java.util.List;
 import java.util.Map;

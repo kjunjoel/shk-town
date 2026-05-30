@@ -1,86 +1,141 @@
 package kr.shkworld.shktown.core.model;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class UserTest {
-    private User user;
-    private final UUID testUUID =  UUID.randomUUID();
-    private final String testName = "GyeongRye";
 
-    @BeforeEach
-    void setUp() {
-        user = new User(testUUID, testName);
+    @Test
+    @DisplayName("기본 생성자 테스트")
+    void constructor_default() {
+        UUID uuid = UUID.randomUUID();
+
+        User user = new User(uuid, "GyeongRye");
+
+        assertEquals(uuid, user.getUUID());
+        assertEquals("GyeongRye", user.getName());
+        assertEquals(BigDecimal.ZERO, user.getCash());
+        assertEquals(-1L, user.getTownID());
+        assertEquals(-1L, user.getNationID());
+        assertTrue(user.getAccounts().isEmpty());
     }
 
-    @Nested
-    @DisplayName("계좌 관리 테스트")
-    class AccountManagement {
+    @Test
+    @DisplayName("DB 로드 생성자 테스트")
+    void constructor_loadedAccounts() {
+        UUID uuid = UUID.randomUUID();
 
-        @Test
-        @DisplayName("신규 계좌 추가 시 Optional로 정상 조회되어야 함")
-        void addAndGetAccount_Success() {
-            Account savings = new Account(testUUID, AccountType.SAVINGS, "123-456", new BigDecimal("50000"));
-            user.addAccount(savings);
-            assertTrue(user.getAccount(AccountType.SAVINGS).isPresent());
-            assertEquals(savings, user.getAccount(AccountType.SAVINGS).get());
-            assertEquals(new BigDecimal("50000"), user.getAccount(AccountType.SAVINGS).get().getBalance());
-        }
+        Account bankAccount = new Account(
+                uuid,
+                AccountType.SAVINGS,
+                "10-200000-300-40",
+                new BigDecimal("5000")
+        );
 
-        @Test
-        @DisplayName("존재하지 않는 타입의 계좌 조회 시 빈 Optional 반환")
-        void getAccount_Empty() {
-            assertTrue(user.getAccount(AccountType.INVESTMENT).isEmpty());
-        }
+        User user = new User(
+                uuid,
+                "Lantum",
+                new BigDecimal("10000"),
+                List.of(bankAccount)
+        );
 
-        @Test
-        @DisplayName("이미 존재하는 타입의 계좌를 추가하면 갱신(Overwrite)되어야 함")
-        void addAccount_Overwite() {
-            Account oldAcc = new Account(testUUID, AccountType.SAVINGS, "OLD", BigDecimal.ZERO);
-            Account newAcc = new Account(testUUID, AccountType.SAVINGS, "NEW", BigDecimal.ONE);
-            user.addAccount(oldAcc);
-            user.addAccount(newAcc);
-            assertEquals("NEW", user.getAccount(AccountType.SAVINGS).get().getAccountNumber());
-        }
+        assertEquals(new BigDecimal("10000"), user.getCash());
+
+        assertTrue(user.getAccount(AccountType.SAVINGS).isPresent());
+        assertEquals(bankAccount,
+                user.getAccount(AccountType.SAVINGS).orElseThrow());
     }
 
-    @Nested
-    @DisplayName("자산 및 소속 정보 테스트")
-    class PropertyAndAffiliation {
+    @Test
+    @DisplayName("계좌 추가")
+    void addAccount() {
+        UUID uuid = UUID.randomUUID();
 
-        @Test
-        @DisplayName("캐시 추가 시 누적 합산이 정확해야 함")
-        void addCash_Accumulation() {
-            user.addCash(new BigDecimal("1000.50"));
-            user.addCash(new BigDecimal("2000.25"));
-            assertEquals(0, new BigDecimal("3000.75").compareTo(user.getCash()));
-        }
+        User user = new User(uuid, "GyeongRye");
 
-        @Test
-        @DisplayName("마을 및 국가 ID 초기값은 -1(무소속)이어야 함")
-        void defaultAffiliation_ShouldBeMinusOne() {
-            assertEquals(-1L, user.getTownID());
-            assertEquals(-1L, user.getNationID());
-        }
+        Account account = new Account(
+                uuid,
+                AccountType.SAVINGS,
+                "10-200000-300-40",
+                BigDecimal.ZERO
+        );
 
-        @Test
-        @DisplayName("DB 로드용 생성자가 모든 필드를 정확히 초기화해야 함")
-        void complexConstructor_Initialization() {
-            Account acc1 = new Account(testUUID, AccountType.CASH, "C1", BigDecimal.TEN);
-            List<Account> accountList = List.of(acc1);
-            User loadedUser = new User(testUUID, "Bak", new BigDecimal("500"), accountList);
-            assertEquals("Bak", loadedUser.getName());
-            assertEquals(0, new BigDecimal("500").compareTo(loadedUser.getCash()));
-            assertTrue(loadedUser.getAccount(AccountType.CASH).isPresent());
-        }
+        user.addAccount(account);
+
+        assertTrue(user.getAccount(AccountType.SAVINGS).isPresent());
+        assertEquals(account,
+                user.getAccount(AccountType.SAVINGS).orElseThrow());
+    }
+
+    @Test
+    @DisplayName("없는 계좌 조회")
+    void getAccount_notFound() {
+        User user = new User(UUID.randomUUID(), "GyeongRye");
+
+        assertTrue(user.getAccount(AccountType.SAVINGS).isEmpty());
+    }
+
+    @Test
+    @DisplayName("캐시 추가")
+    void addCash() {
+        User user = new User(UUID.randomUUID(), "GyeongRye");
+
+        user.addCash(new BigDecimal("1000"));
+        user.addCash(new BigDecimal("500"));
+
+        assertEquals(new BigDecimal("1500"), user.getCash());
+    }
+
+    @Test
+    @DisplayName("같은 타입 계좌 추가 시 덮어쓰기")
+    void addAccount_replace() {
+        UUID uuid = UUID.randomUUID();
+
+        User user = new User(uuid, "GyeongRye");
+
+        Account oldAccount = new Account(
+                uuid,
+                AccountType.SAVINGS,
+                "10-200000-300-40",
+                BigDecimal.ZERO
+        );
+
+        Account newAccount = new Account(
+                uuid,
+                AccountType.SAVINGS,
+                "10-500000-600-70",
+                new BigDecimal("1000")
+        );
+
+        user.addAccount(oldAccount);
+        user.addAccount(newAccount);
+
+        Account result =
+                user.getAccount(AccountType.SAVINGS).orElseThrow();
+
+        assertEquals("222", result.getAccountNumber());
+        assertEquals(new BigDecimal("1000"), result.getBalance());
+    }
+
+    @Test
+    @DisplayName("Setter 테스트")
+    void setters() {
+        User user = new User(UUID.randomUUID(), "Steve");
+
+        user.setName("Lantum");
+        user.setTownID(10L);
+        user.setNationID(20L);
+        user.setCash(new BigDecimal("9999"));
+
+        assertEquals("Lantum", user.getName());
+        assertEquals(10L, user.getTownID());
+        assertEquals(20L, user.getNationID());
+        assertEquals(new BigDecimal("9999"), user.getCash());
     }
 }

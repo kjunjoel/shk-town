@@ -1,4 +1,4 @@
-package kr.shkworld.shktown.integration;
+package kr.shkworld.shktown.integration.vault;
 
 import kr.shkworld.shktown.core.model.AccountType;
 import kr.shkworld.shktown.core.model.TransactionReason;

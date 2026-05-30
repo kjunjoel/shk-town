@@ -1,15 +1,13 @@
 package kr.shkworld.shktown.command;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.regex.Pattern;
-
+import kr.shkworld.shktown.SHKTown;
+import kr.shkworld.shktown.chat.EconomyFormatter;
+import kr.shkworld.shktown.core.model.Account;
+import kr.shkworld.shktown.core.model.AccountType;
+import kr.shkworld.shktown.core.model.TransactionReason;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -19,14 +17,15 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import kr.shkworld.shktown.SHKTown;
-import kr.shkworld.shktown.core.formatter.EconomyFormatter;
-import kr.shkworld.shktown.core.model.Account;
-import kr.shkworld.shktown.core.model.AccountType;
-import kr.shkworld.shktown.core.model.TransactionReason;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.regex.Pattern;
 
 public class TransferCommand implements CommandExecutor, TabCompleter {
     private final SHKTown plugin;
@@ -95,6 +94,10 @@ public class TransferCommand implements CommandExecutor, TabCompleter {
             return List.of();
         }
         List<String> completions = new ArrayList<>();
+
+        if (args.length == 1) {
+            Bukkit.getOnlinePlayers().forEach(p -> completions.add(p.getName()));
+        }
 
         return completions;
     }

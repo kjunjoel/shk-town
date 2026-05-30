@@ -3,7 +3,6 @@ package kr.shkworld.shktown.core.service;
 import kr.shkworld.shktown.core.model.AccountType;
 import kr.shkworld.shktown.core.model.EconomyLog;
 import kr.shkworld.shktown.core.model.LogType;
-import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -22,7 +21,7 @@ public interface LogService {
      * @param detail 세부사유
      */
     CompletableFuture<Void> logEconomy(
-            AccountType type, String targetID, @Nullable String accountNumber,
+            AccountType type, String targetID, String accountNumber,
             BigDecimal amount, BigDecimal balanceAfter, Enum<?> reason, String detail
     );
 

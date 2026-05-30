@@ -3,25 +3,33 @@ version: 1.0
 main: kr.shkworld.shktown.SHKTown
 api-version: 1.21
 
-soft-depend: [Vault]
+soft-depend: [Vault, LuckPerms, WorldGuard]
 
 commands:
   돈:
     description: 플레이어가 가진 돈을 확인합니다.
     usage: /돈 [순위] [페이지]
-    aliases: [ehs]
+    aliases: [ehs, money, bal]
 
   마을:
     description: 마을 정보를 확인합니다.
     usage: /마을
-    aliases: [akdmf]
+    aliases: [akdmf, village]
+
+  송금:
+    description: 플레이어가 가진 돈을 송금합니다.
+    usage: /송금 <이름/계좌번호> <금액> [예금/투자]
+    aliases: [thdrma, pay]
+
+  송금확인:
+    usage: /송금확인
 
   재산:
     description: 플레이어가 가진 재산을 확인합니다.
     usage: /재산 [순위] [페이지]
-    aliases: [wotks]
+    aliases: [wotks, wealth]
 
   캐시:
     description: 플레이어가 가진 캐시를 확인합니다.
     usage: /캐시
-    aliases: [zotl]
+    aliases: [zotl, cash]

@@ -1,6 +1,7 @@
 package kr.shkworld.shktown.core.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,7 +31,7 @@ public class Town {
     public String getName() { return name; }
     public UUID getMayorUUID() { return mayorUUID; }
     public long getNationID() { return nationID; }
-    public List<UUID> getMembers() { return members; }
+    public List<UUID> getMembers() { return Collections.unmodifiableList(members); }
 
     public void setName(String name) { this.name = name; }
     public void setMayorUUID(UUID mayorUUID) { this.mayorUUID = mayorUUID; }

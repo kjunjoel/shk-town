@@ -1,5 +1,6 @@
 package kr.shkworld.shktown.core.service.impl;
 
+import kr.shkworld.shktown.core.economy.wealth.WealthComponent;
 import kr.shkworld.shktown.core.model.Account;
 import kr.shkworld.shktown.core.model.AccountType;
 import kr.shkworld.shktown.core.model.CashReason;
@@ -7,13 +8,12 @@ import kr.shkworld.shktown.core.model.LogType;
 import kr.shkworld.shktown.core.model.RankEntry;
 import kr.shkworld.shktown.core.model.TransactionReason;
 import kr.shkworld.shktown.core.model.User;
-import kr.shkworld.shktown.core.model.wealth.WealthComponent;
 import kr.shkworld.shktown.core.repository.EconomyRepository;
 import kr.shkworld.shktown.core.service.AccountService;
 import kr.shkworld.shktown.core.service.EconomyService;
 import kr.shkworld.shktown.core.service.LogService;
 import kr.shkworld.shktown.core.service.UserService;
-import kr.shkworld.shktown.core.util.PluginLogger;
+import kr.shkworld.util.PluginLogger;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

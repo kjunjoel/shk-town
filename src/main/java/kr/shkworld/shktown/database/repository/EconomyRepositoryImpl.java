@@ -1,7 +1,9 @@
-package kr.shkworld.shktown.database;
+package kr.shkworld.shktown.database.repository;
 
 import kr.shkworld.shktown.core.model.RankEntry;
 import kr.shkworld.shktown.core.repository.EconomyRepository;
+import kr.shkworld.shktown.database.DatabaseManager;
+
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.Connection;

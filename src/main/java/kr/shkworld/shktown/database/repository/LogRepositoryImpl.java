@@ -1,9 +1,11 @@
-package kr.shkworld.shktown.database;
+package kr.shkworld.shktown.database.repository;
 
 import kr.shkworld.shktown.core.model.AccountType;
 import kr.shkworld.shktown.core.model.EconomyLog;
 import kr.shkworld.shktown.core.model.LogType;
 import kr.shkworld.shktown.core.repository.LogRepository;
+import kr.shkworld.shktown.database.DatabaseManager;
+
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.math.BigDecimal;

@@ -1,7 +1,9 @@
-package kr.shkworld.shktown.database;
+package kr.shkworld.shktown.database.repository;
 
 import kr.shkworld.shktown.core.model.User;
 import kr.shkworld.shktown.core.repository.UserRepository;
+import kr.shkworld.shktown.database.DatabaseManager;
+
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.math.BigDecimal;

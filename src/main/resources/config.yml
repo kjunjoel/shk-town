@@ -4,3 +4,13 @@ database:
   database: "shktown_db"
   username: "root"
   password: "1234"
+
+chat:
+  local-regions:
+    shk-town-square: "중앙광장"
+    shchool: "상어고등학교"
+  messages:
+    entry-title: "§b%region% §f입장"
+    entry-subtitle: "§7지역 채팅이 활성화되었습니다."
+    quit-title: "§b%region% §f입장"
+    quit-subtitle: "§7지역 채팅이 비활성화되었습니다."

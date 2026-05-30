@@ -1,10 +1,10 @@
 package kr.shkworld.shktown.core.service;
 
+import kr.shkworld.shktown.core.economy.wealth.WealthComponent;
 import kr.shkworld.shktown.core.model.AccountType;
 import kr.shkworld.shktown.core.model.CashReason;
 import kr.shkworld.shktown.core.model.RankEntry;
 import kr.shkworld.shktown.core.model.TransactionReason;
-import kr.shkworld.shktown.core.model.wealth.WealthComponent;
 
 import java.math.BigDecimal;
 import java.util.List;

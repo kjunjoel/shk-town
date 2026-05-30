@@ -1,9 +1,8 @@
-package kr.shkworld.shktown.core.service.impl.wealth;
+package kr.shkworld.shktown.core.economy.wealth;
 
 import kr.shkworld.shktown.core.model.Account;
 import kr.shkworld.shktown.core.model.AccountType;
 import kr.shkworld.shktown.core.model.User;
-import kr.shkworld.shktown.core.model.wealth.WealthComponent;
 import kr.shkworld.shktown.core.service.UserService;
 
 import java.math.BigDecimal;

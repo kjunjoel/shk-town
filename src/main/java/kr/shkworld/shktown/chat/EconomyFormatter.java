@@ -1,4 +1,4 @@
-package kr.shkworld.shktown.core.formatter;
+package kr.shkworld.shktown.chat;
 
 import kr.shkworld.shktown.core.model.Account;
 import kr.shkworld.shktown.core.model.EconomyLog;

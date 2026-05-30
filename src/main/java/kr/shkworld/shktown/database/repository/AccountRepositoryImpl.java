@@ -1,8 +1,10 @@
-package kr.shkworld.shktown.database;
+package kr.shkworld.shktown.database.repository;
 
 import kr.shkworld.shktown.core.model.Account;
 import kr.shkworld.shktown.core.model.AccountType;
 import kr.shkworld.shktown.core.repository.AccountRepository;
+import kr.shkworld.shktown.database.DatabaseManager;
+
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.Connection;

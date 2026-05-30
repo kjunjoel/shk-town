@@ -9,7 +9,7 @@ import kr.shkworld.shktown.core.model.Town;
 import kr.shkworld.shktown.core.repository.TownRepository;
 import kr.shkworld.shktown.core.service.AccountService;
 import kr.shkworld.shktown.core.service.UserService;
-import kr.shkworld.shktown.core.util.PluginLogger;
+import kr.shkworld.util.PluginLogger;
 import kr.shkworld.shktown.core.service.TownService;
 
 public class TownServiceImpl implements TownService {

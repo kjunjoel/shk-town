@@ -1,7 +1,7 @@
 package kr.shkworld.shktown.command;
 
 import kr.shkworld.shktown.SHKTown;
-import kr.shkworld.shktown.core.formatter.EconomyFormatter;
+import kr.shkworld.shktown.chat.EconomyFormatter;
 import kr.shkworld.shktown.core.model.Account;
 import kr.shkworld.shktown.core.model.AccountType;
 import kr.shkworld.shktown.core.model.CashReason;
