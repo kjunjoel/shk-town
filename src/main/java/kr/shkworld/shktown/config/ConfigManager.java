@@ -9,7 +9,9 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ConfigManager {
@@ -28,7 +30,10 @@ public class ConfigManager {
         loadConfig("smartphone", "configs/smartphone.yml");
         loadConfig("taxi", "configs/taxi.yml");
         loadConfig("navigation", "configs/navigation.yml");
-        loadConfig("shops", "configs/shops.yml");
+        Map<String, FileConfiguration> shopConfigs = loadConfigDirectory(
+                "configs/shops",
+                "configs/shops/general.yml"
+        );
 
         loadGlobalConfig(getConfig("global"));
 
@@ -49,8 +54,8 @@ public class ConfigManager {
                 plugin.getNavigationManager()
         );
 
-        ShopConfigLoader.loadShopConfig(
-                getConfig("shops"),
+        ShopConfigLoader.loadShopConfigs(
+                shopConfigs,
                 plugin.getShopManager()
         );
     }
@@ -84,6 +89,33 @@ public class ConfigManager {
         }
 
         configs.put(key, config);
+    }
+
+    private Map<String, FileConfiguration> loadConfigDirectory(String directoryName, String... defaultResources) {
+        File directory = new File(plugin.getDataFolder(), directoryName);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        for (String defaultResource : defaultResources) {
+            File defaultFile = new File(plugin.getDataFolder(), defaultResource);
+            if (!defaultFile.exists()) {
+                plugin.saveResource(defaultResource, false);
+            }
+        }
+
+        Map<String, FileConfiguration> loadedConfigs = new LinkedHashMap<>();
+        File[] files = directory.listFiles((dir, name) -> name.toLowerCase().endsWith(".yml"));
+        if (files == null) {
+            return loadedConfigs;
+        }
+
+        Arrays.sort(files, (left, right) -> left.getName().compareToIgnoreCase(right.getName()));
+        for (File file : files) {
+            YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
+            loadedConfigs.put(file.getName(), config);
+        }
+        return loadedConfigs;
     }
 
     public FileConfiguration getConfig(String key) {

@@ -1,0 +1,38 @@
+id: general
+title: "&0시스템 상점"
+size: 54
+
+items:
+  bread_buy:
+    slot: 10
+    action: BUY
+    currency: WON
+    price: "500.00"
+    item:
+      material: BREAD
+      amount: 1
+      name: "&f빵"
+      lore:
+        - "&7기본 식량입니다."
+  apple_cash_buy:
+    slot: 12
+    action: BUY
+    currency: CASH
+    price: "10.00"
+    item:
+      material: APPLE
+      amount: 1
+      name: "&c캐시 사과"
+      lore:
+        - "&7캐시로 구매하는 예시 상품입니다."
+  wheat_sell:
+    slot: 16
+    action: SELL
+    currency: WON
+    price: "100.00"
+    item:
+      material: WHEAT
+      amount: 8
+      name: "&e밀 8개"
+      lore:
+        - "&7밀 8개를 시스템에 판매합니다."

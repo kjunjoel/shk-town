@@ -17,32 +17,53 @@ public final class ShopConfigLoader {
     private ShopConfigLoader() {
     }
 
-    public static void loadShopConfig(FileConfiguration config, ShopManager shopManager) {
-        if (config == null || shopManager == null) {
+    public static void loadShopConfigs(Map<String, FileConfiguration> configs, ShopManager shopManager) {
+        if (configs == null || shopManager == null) {
             return;
         }
 
         shopManager.clearShops();
-        ConfigurationSection shopsSection = config.getConfigurationSection("shops");
-        if (shopsSection == null) {
+        for (Map.Entry<String, FileConfiguration> entry : configs.entrySet()) {
+            loadShopConfig(entry.getKey(), entry.getValue(), shopManager);
+        }
+    }
+
+    private static void loadShopConfig(String fileName, FileConfiguration config, ShopManager shopManager) {
+        if (config == null) {
             return;
         }
 
+        ConfigurationSection shopsSection = config.getConfigurationSection("shops");
+        if (shopsSection != null) {
+            loadLegacyShopConfig(shopsSection, shopManager);
+            return;
+        }
+
+        String fallbackId = fileName == null ? "shop" : fileName.replaceFirst("\\.ya?ml$", "");
+        String shopId = config.getString("id", fallbackId);
+        registerShop(shopManager, shopId, config);
+    }
+
+    private static void loadLegacyShopConfig(ConfigurationSection shopsSection, ShopManager shopManager) {
         for (String shopId : shopsSection.getKeys(false)) {
             ConfigurationSection shopSection = shopsSection.getConfigurationSection(shopId);
             if (shopSection == null) {
                 continue;
             }
 
-            int size = normalizeSize(shopSection.getInt("size", 54));
-            Map<Integer, ConfiguredShopItem> items = loadItems(shopSection.getConfigurationSection("items"), size);
-            shopManager.registerShop(new ConfiguredShop(
-                    shopId,
-                    shopSection.getString("title", shopId),
-                    size,
-                    items
-            ));
+            registerShop(shopManager, shopId, shopSection);
         }
+    }
+
+    private static void registerShop(ShopManager shopManager, String shopId, ConfigurationSection shopSection) {
+        int size = normalizeSize(shopSection.getInt("size", 54));
+        Map<Integer, ConfiguredShopItem> items = loadItems(shopSection.getConfigurationSection("items"), size);
+        shopManager.registerShop(new ConfiguredShop(
+                shopId,
+                shopSection.getString("title", shopId),
+                size,
+                items
+        ));
     }
 
     private static Map<Integer, ConfiguredShopItem> loadItems(ConfigurationSection section, int shopSize) {
