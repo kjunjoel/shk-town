@@ -15,10 +15,10 @@ public class LuckPermsHook {
         }
 
         this.luckPermsAPI = LuckPermsProvider.get();
-        return this.luckPermsAPI != null;
+        return true;
     }
 
-    public Optional<LuckPerms> getAPI() {
+    public Optional<LuckPerms> getApi() {
         return Optional.ofNullable(luckPermsAPI);
     }
 }

@@ -17,19 +17,14 @@ dependencies {
     implementation("com.zaxxer:HikariCP:7.0.2")
     implementation("com.mysql:mysql-connector-j:9.6.0")
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
-    compileOnly ("com.github.MilkBowl:VaultAPI:1.7") {
-        exclude("org.bukkit", "bukkit")
-    }
     compileOnly("net.luckperms:api:5.5")
     compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.14")
+    compileOnly("io.github.toxicity188:BetterHud-bukkit-api:2.0.0")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.3")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:6.0.3")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.0.3")
+    testImplementation(platform("org.junit:junit-bom:5.11.4"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.108.0")
     testImplementation("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
-    testImplementation("org.mockito:mockito-core:5.23.0")
 }
 
 tasks {
@@ -52,6 +47,6 @@ tasks.test {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }

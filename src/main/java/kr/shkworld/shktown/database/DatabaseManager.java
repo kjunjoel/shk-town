@@ -21,13 +21,21 @@ public class DatabaseManager {
     }
 
     public void setup(JavaPlugin plugin) throws SQLException {
-        HikariConfig config = new HikariConfig();
-
         String host = plugin.getConfig().getString("database.host");
         int port = plugin.getConfig().getInt("database.port");
         String dbName = plugin.getConfig().getString("database.database");
         String username = plugin.getConfig().getString("database.username");
         String password = plugin.getConfig().getString("database.password");
+
+        setup(host, port, dbName, username, password);
+    }
+
+    public synchronized void setup(
+            String host, int port, String dbName,
+            String username, String password
+    ) throws SQLException {
+        close();
+        HikariConfig config = new HikariConfig();
 
         String url = String.format("jdbc:mysql://%s:%d/%s?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8",
                 host, port, dbName);

@@ -1,10 +1,11 @@
 package kr.shkworld.shktown.listener;
 
+import kr.shkworld.shktown.listener.player.PlayerJoinListener;
+import kr.shkworld.shktown.listener.player.PlayerQuitListener;
+import kr.shkworld.shktown.listener.shop.ShopClickListener;
 import org.bukkit.plugin.PluginManager;
 
 import kr.shkworld.shktown.SHKTown;
-import kr.shkworld.shktown.chat.ChatManager;
-import kr.shkworld.shktown.integration.worldguard.WorldGuardHook;
 
 public class EventManager {
     private final SHKTown plugin;
@@ -13,15 +14,11 @@ public class EventManager {
         this.plugin = plugin;
     }
 
-    public void registerEvents(WorldGuardHook worldGuardHook, ChatManager chatManager) {
+    public void registerEvents() {
         PluginManager pm = plugin.getServer().getPluginManager();
 
-        pm.registerEvents(new PlayerJoinListener(
-            plugin.getUserService(),
-            plugin.getAccountService(),
-            plugin.getLogService()
-        ), plugin);
-        pm.registerEvents(new ChatListener(chatManager), plugin);
-        pm.registerEvents(new RegionAreaListener(worldGuardHook, chatManager, plugin), plugin);
+        pm.registerEvents(new PlayerJoinListener(plugin), plugin);
+        pm.registerEvents(new PlayerQuitListener(plugin), plugin);
+        pm.registerEvents(new ShopClickListener(), plugin);
     }
 }

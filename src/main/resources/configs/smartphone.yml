@@ -1,0 +1,108 @@
+title: "\uE001"
+
+# 모든 스마트폰 앱이 공유하는 기본 조작 아이템입니다.
+home_button:
+  material: COMPASS
+  name: "&cHOME"
+  model_name: 0
+
+# 모든 스마트폰 앱의 이전/다음 화면 이동에 공통으로 사용하는 버튼입니다.
+navigation_buttons:
+  previous_button:
+    material: ARROW
+    name: "&a◀ 이전 페이지"
+    model_name: 0
+  next_button:
+    material: ARROW
+    name: "&a다음 페이지 ▶"
+    model_name: 0
+
+items:
+  bank:
+    slot: 20
+    material: GOLD_INGOT
+    name: "&e상어은행"
+    model_name: 0
+    lore:
+      - "&7상대방 계좌번호로 간편하게"
+      - "&7송금하거나 주 또는 도시 세금 현황을 조회합니다."
+  town:
+    slot: 21
+    material: IRON_DOOR
+    name: "&b도시 관리"
+    model_name: 0
+    lore:
+      - "&7우리 주 또는 도시의 땅을 관리하고"
+      - "&7국민 또는 시민 명부 및 공동 금고를 제어합니다."
+  investment:
+    slot: 22
+    material: EMERALD
+    name: "&aSHK Investment"
+    model_name: 0
+    lore:
+      - "&7실시간으로 변동하는 주식과"
+      - "&7가상자산 시세를 확인하고 매매합니다."
+  market:
+    slot: 29
+    material: ORANGE_DYE
+    name: "&6상어마켓"
+    model_name: 0
+    lore:
+      - "&7유저들이 올린 물품을"
+      - "&7비대면으로 구매하거나 내 템을 판매합니다."
+  taxi:
+    slot: 30
+    material: YELLOW_DYE
+    name: "&eSHARK T"
+    model_name: 0
+    lore:
+      - "&7택시를 사용하여"
+      - "&7원하는 주요 거점으로 즉시 이동합니다."
+  navigation:
+    slot: 31
+    material: MAP
+    name: "&9SHK 네비게이션"
+    model_name: 0
+    lore:
+      - "&7바닥에 그려지는 입체 파티클 가이드를"
+      - "&7따라 목적지까지 실시간 길 안내를 받습니다."
+  talk:
+    slot: 38
+    material: WRITABLE_BOOK
+    name: "&f샤크톡"
+    model_name: 0
+    lore:
+      - "&7단체 대화방, 마을 단톡방 및"
+      - "&7실시간 계좌 입출금 알림톡을 확인합니다."
+  challengers:
+    slot: 39
+    material: CLOCK
+    name: "&d챌린저스"
+    model_name: 0
+    lore:
+      - "&7일일 퀘스트 또는 접속시간 챌린지 현황을"
+      - "&7확인하고 보상을 획득합니다."
+  parcel:
+    slot: 40
+    material: CHEST
+    name: "&a&lSHK 택배"
+    model_name: 0
+    lore:
+      - "&7상어마켓에서 구매한 물품이나"
+      - "&7시스템 보상 아이템을 여기서 원격 수령합니다."
+  settings:
+    slot: 41
+    material: NAME_TAG
+    name: "&5설정"
+    model_name: 0
+    lore:
+      - "&7내 머리 위에 표시될 칭호와"
+      - "&7스마트폰 프로필 명함을 커스텀합니다."
+  cashshop:
+    slot: 42
+    material: DIAMOND
+    name: "&b캐시샵"
+    model_name: 0
+    lore:
+      - "&7보유 중인 캐시를 소모하여"
+      - "&7치장용 자산이나 특수 아이템을 결제합니다."

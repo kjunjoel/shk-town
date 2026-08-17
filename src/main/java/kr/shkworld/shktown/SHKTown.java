@@ -1,46 +1,53 @@
 package kr.shkworld.shktown;
 
-import kr.shkworld.shktown.chat.ChatManager;
 import kr.shkworld.shktown.command.CommandManager;
-import kr.shkworld.shktown.core.economy.wealth.LiquidWealth;
-import kr.shkworld.shktown.core.repository.AccountRepository;
-import kr.shkworld.shktown.core.repository.EconomyRepository;
-import kr.shkworld.shktown.core.repository.LogRepository;
-import kr.shkworld.shktown.core.repository.TownRepository;
-import kr.shkworld.shktown.core.repository.UserRepository;
-import kr.shkworld.shktown.core.service.AccountService;
-import kr.shkworld.shktown.core.service.EconomyService;
-import kr.shkworld.shktown.core.service.LogService;
-import kr.shkworld.shktown.core.service.TownService;
-import kr.shkworld.shktown.core.service.UserService;
-import kr.shkworld.shktown.core.service.impl.AccountServiceImpl;
-import kr.shkworld.shktown.core.service.impl.EconomyServiceImpl;
-import kr.shkworld.shktown.core.service.impl.LogServiceImpl;
-import kr.shkworld.shktown.core.service.impl.TownServiceImpl;
-import kr.shkworld.shktown.core.service.impl.UserServiceImpl;
+import kr.shkworld.shktown.config.ConfigManager;
+import kr.shkworld.shktown.core.economy.repository.AccountRepository;
+import kr.shkworld.shktown.core.logging.repository.LogRepository;
+import kr.shkworld.shktown.core.economy.repository.TransactionRepository;
+import kr.shkworld.shktown.core.economy.repository.UserRepository;
+import kr.shkworld.shktown.core.economy.service.AccountService;
+import kr.shkworld.shktown.core.economy.service.EconomyService;
+import kr.shkworld.shktown.core.logging.service.LogService;
+import kr.shkworld.shktown.core.economy.service.UserService;
+import kr.shkworld.shktown.core.economy.service.impl.AccountServiceImpl;
+import kr.shkworld.shktown.core.economy.service.impl.EconomyServiceImpl;
+import kr.shkworld.shktown.core.logging.service.impl.LogServiceImpl;
+import kr.shkworld.shktown.core.economy.service.impl.UserServiceImpl;
+import kr.shkworld.shktown.core.navigation.service.NavigationService;
+import kr.shkworld.shktown.core.shop.service.ShopService;
+import kr.shkworld.shktown.core.shop.service.impl.ShopServiceImpl;
 import kr.shkworld.shktown.database.DatabaseManager;
 import kr.shkworld.shktown.database.repository.AccountRepositoryImpl;
-import kr.shkworld.shktown.database.repository.EconomyRepositoryImpl;
 import kr.shkworld.shktown.database.repository.LogRepositoryImpl;
-import kr.shkworld.shktown.database.repository.TownRepositoryImpl;
+import kr.shkworld.shktown.database.repository.TransactionRepositoryImpl;
 import kr.shkworld.shktown.database.repository.UserRepositoryImpl;
 import kr.shkworld.shktown.integration.luckperms.LuckPermsHook;
-import kr.shkworld.shktown.integration.vault.VaultEconomyProvider;
 import kr.shkworld.shktown.integration.worldguard.WorldGuardHook;
 import kr.shkworld.shktown.listener.EventManager;
-import kr.shkworld.util.PluginLogger;
-import org.bukkit.plugin.ServicePriority;
+import kr.shkworld.shktown.ui.apps.SmartphoneManager;
+import kr.shkworld.shktown.ui.apps.navigation.NavigationManager;
+import kr.shkworld.shktown.ui.shop.ShopManager;
+import kr.shkworld.shktown.ui.apps.taxi.TaxiMapManager;
+import kr.shkworld.shktown.util.PluginLogger;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
+
 public class SHKTown extends JavaPlugin {
+    private ConfigManager configManager;
 
     private UserService userService;
     private AccountService accountService;
     private EconomyService economyService;
-    private TownService townService;
     private LogService logService;
+    private ShopService shopService;
 
-    private ChatManager chatManager;
+    private SmartphoneManager smartphoneManager;
+    private TaxiMapManager taxiMapManager;
+    private NavigationService navigationService;
+    private NavigationManager navigationManager;
+    private ShopManager shopManager;
 
     private final PluginLogger pluginLogger = new PluginLogger() {
         @Override
@@ -72,52 +79,69 @@ public class SHKTown extends JavaPlugin {
             getLogger().warning("WorldGuard 플러그인을 찾을 수 없습니다! 일부 기능이 비활성화됩니다.");
         }
 
-        this.chatManager = new ChatManager(luckPermsHook);
+        UserRepository userRepository = new UserRepositoryImpl();
+        AccountRepository accountRepository = new AccountRepositoryImpl();
+        LogRepository logRepository = new LogRepositoryImpl();
+        TransactionRepository transactionRepository = new TransactionRepositoryImpl();
 
-        UserRepository userRepository = new UserRepositoryImpl(this);
-        AccountRepository accountRepository = new AccountRepositoryImpl(this);
-        EconomyRepository economyRepository = new EconomyRepositoryImpl(this);
-        TownRepository townRepository = new TownRepositoryImpl(this);
-        LogRepository logRepository = new LogRepositoryImpl(this);
+        File dataFolder = getDataFolder();
 
-        this.logService = new LogServiceImpl(logRepository, pluginLogger);
-        this.userService = new UserServiceImpl(userRepository, accountRepository, pluginLogger);
-        this.accountService = new AccountServiceImpl(userService, accountRepository);
-        this.townService = new TownServiceImpl(userService, accountService, townRepository, pluginLogger);
-        this.economyService = new EconomyServiceImpl(economyRepository, userService, accountService, logService, pluginLogger);
-        this.economyService.addWealthComponents(new LiquidWealth(userService));
+        this.logService = new LogServiceImpl(dataFolder, logRepository, pluginLogger);
+        this.userService = new UserServiceImpl(userRepository, logService);
+        this.accountService = new AccountServiceImpl(accountRepository, transactionRepository, logService);
+        this.economyService = new EconomyServiceImpl(accountService, transactionRepository);
+        this.shopService = new ShopServiceImpl(accountService, userService);
 
-        new EventManager(this).registerEvents(worldGuardHook, chatManager);
+        this.navigationService = new NavigationService();
+
+        this.smartphoneManager = new SmartphoneManager(this);
+        this.taxiMapManager = new TaxiMapManager(this);
+        this.navigationManager = new NavigationManager(this);
+        this.shopManager = new ShopManager(this, shopService);
+
+        this.configManager = new ConfigManager(this);
+        reload();
+
+        new EventManager(this).registerEvents();
         new CommandManager(this).registerCommands();
-
-        if (getServer().getPluginManager().getPlugin("Vault") == null) {
-            pluginLogger.severe("Vault 플러그인을 찾을 수 없습니다! 경제 연동이 비활성화됩니다.");
-            return;
-        }
-
-        getServer().getServicesManager().register(
-                net.milkbowl.vault.economy.Economy.class,
-                new VaultEconomyProvider(accountService, economyService),
-                this,
-                ServicePriority.Highest
-        );
 
         getLogger().info("SHK TOWN 플러그인이 성공적으로 활성화되었습니다!");
     }
 
     @Override
     public void onDisable() {
+        if (accountService != null) {
+            accountService.flushAllSync();
+        }
         if (userService != null) {
-            userService.saveAllSync();
+            userService.flushAllSync();
         }
         DatabaseManager.getInstance().close();
         getLogger().info("SHK TOWN 플러그인이 종료되었습니다.");
     }
 
+    public void reload() {
+        configManager.loadConfigs();
+    }
+
     public UserService getUserService() { return userService; }
     public AccountService getAccountService() { return accountService; }
     public EconomyService getEconomyService() { return economyService; }
-    public TownService getTownService() { return townService; }
     public LogService getLogService() { return logService; }
-    public ChatManager getChatManager() { return chatManager; }
+    public ShopService getShopService() { return shopService; }
+    public NavigationService getNavigationService() {
+        return navigationService;
+    }
+    public SmartphoneManager getSmartphoneManager() {
+        return smartphoneManager;
+    }
+    public TaxiMapManager getTaxiMapManager() {
+        return taxiMapManager;
+    }
+    public NavigationManager getNavigationManager() {
+        return navigationManager;
+    }
+    public ShopManager getShopManager() {
+        return shopManager;
+    }
 }

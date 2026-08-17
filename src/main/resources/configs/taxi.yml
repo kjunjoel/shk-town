@@ -1,0 +1,249 @@
+settings:
+  default_map: "map_0_0"
+
+# 카카오 T 서비스 선택 화면. title은 리소스팩 GUI 배경 글리프입니다.
+main_screen:
+  title: "\uE005"
+  # action: OPEN_MAP은 지도 타일을 열고, MESSAGE는 안내 메시지만 표시합니다.
+  buttons:
+    taxi:
+      slot: 10
+      material: PAPER
+      name: "&e택시"
+      model_data: 1120
+      action: OPEN_MAP
+      map: "map_0_0"
+    black:
+      slot: 12
+      material: PAPER
+      name: "&8블랙"
+      model_data: 1121
+      action: MESSAGE
+    bike:
+      slot: 14
+      material: PAPER
+      name: "&e바이크"
+      model_data: 1122
+      action: MESSAGE
+    driver:
+      slot: 16
+      material: PAPER
+      name: "&b대리"
+      model_data: 1123
+      action: MESSAGE
+    delivery:
+      slot: 19
+      material: PAPER
+      name: "&6퀵/택배"
+      model_data: 1124
+      action: MESSAGE
+    flight:
+      slot: 21
+      material: PAPER
+      name: "&f항공"
+      model_data: 1125
+      action: MESSAGE
+    bus:
+      slot: 23
+      material: PAPER
+      name: "&7시외버스"
+      model_data: 1126
+      action: MESSAGE
+    my_car:
+      slot: 25
+      material: PAPER
+      name: "&b마이카"
+      model_data: 1127
+      action: MESSAGE
+    train:
+      slot: 28
+      material: PAPER
+      name: "&9기차"
+      model_data: 1128
+      action: MESSAGE
+    shuttle:
+      slot: 30
+      material: PAPER
+      name: "&e셔틀"
+      model_data: 1129
+      action: MESSAGE
+    carpool:
+      slot: 32
+      material: PAPER
+      name: "&e카풀"
+      model_data: 1130
+      action: MESSAGE
+    wave:
+      slot: 34
+      material: PAPER
+      name: "&fWAVVE"
+      model_data: 1131
+      action: MESSAGE
+
+# 스마트폰으로 택시 앱을 열려면 이 아이템을 하나 이상 가지고 있어야 합니다.
+# NPC는 택시 정류장 반경 안에 있어야 하며, 호출권 없이 우클릭하면 지도에 바로 진입합니다.
+access:
+  call_pass:
+    material: PAPER
+    name: "&e택시 호출권"
+    model_data: 1132
+  npc:
+    enabled: true
+    name: "택시 기사"
+
+ui:
+  title_main: "&e🚕 이동 중..."
+  title_sub: "&7목적지: {stop_name}"
+  title_fade_in_ms: 250
+  title_stay_ms: 1250
+  title_fade_out_ms: 250
+  teleport_delay_ticks: 60
+
+messages:
+  arrived: "&a[SHARK T] {stop_name}에 도착하였습니다!"
+  loading_app: "&e[SHARK T] &a앱을 로딩하는 중..."
+  unavailable_service: "&c[SHARK T] 아직 사용할 수 없는 서비스입니다."
+  no_call_pass: "&c[SHARK T] 택시 호출권이 필요합니다. 정류장 NPC에게 문의하세요."
+
+# 정류장의 이름, CraftEngine 아이콘, 실제 위치를 한 곳에서 관리합니다.
+# model_data에는 숫자형 CustomModelData 또는 namespace:item_id를 넣을 수 있습니다.
+stops:
+  apartments_a_north:
+    name: "A아파트 북쪽"
+    material: PAPER
+    model_data: 1109
+    location: { world: "other", x: -1572.5, y: 56.0, z: 400.5, yaw: 90.0 }
+  apartments_a_south:
+    name: "A아파트 남쪽"
+    material: PAPER
+    model_data: 1109
+    location: { world: "other", x: -1571.5, y: 56.0, z: 120.5, yaw: 90.0 }
+  apartments_b:
+    name: "B아파트"
+    material: PAPER
+    model_data: 1108
+    location: { world: "other", x: -1286.5, y: 56.0, z: 151.5, yaw: -90.0 }
+  arts_association:
+    name: "예술협회"
+    material: PAPER
+    model_data: 1116
+    location: { world: "other", x: -1572.5, y: 56.0, z: 718.5, yaw: 90.0 }
+  assembly:
+    name: "의회"
+    material: PAPER
+    model_data: 1105
+    location: { world: "other", x: -917.5, y: 56.0, z: 429.5, yaw: -90.0 }
+  central_shopping_street:
+    name: "중앙 상가거리"
+    material: PAPER
+    model_data: 1119
+    location: { world: "other", x: -1433.5, y: 56.0, z: 256.5, yaw: 180.0 }
+  central_square:
+    name: "중앙 광장"
+    material: PAPER
+    model_data: 1107
+    location: { world: "other", x: -1447.5, y: 55.0, z: -32.5, yaw: 180.0 }
+  city_hall:
+    name: "시청"
+    material: PAPER
+    model_data: 1117
+    location: { world: "other", x: -1444.5, y: 59.0, z: -202.5, yaw: -135.0 }
+  court:
+    name: "법원"
+    material: PAPER
+    model_data: 1110
+    location: { world: "other", x: -917.5, y: 56.0, z: 650.5, yaw: -90.0 }
+  fire_agency:
+    name: "소방청"
+    material: PAPER
+    model_data: 0
+    location: { world: "other", x: -1286.5, y: 56.0, z: 680.5, yaw: 180.0 }
+  hall_of_fame:
+    name: "명예의 전당"
+    material: PAPER
+    model_data: 1112
+    location: { world: "other", x: -1607.5, y: 56.0, z: 800.5, yaw: 0.0 }
+  harbor:
+    name: "항만"
+    material: PAPER
+    model_data: 1102
+    location: { world: "other", x: -2081.5, y: 56.0, z: -833.5, yaw: 180.0 }
+  high_school:
+    name: "고등학교"
+    material: PAPER
+    model_data: 1113
+    location: { world: "other", x: -1683.5, y: 56.0, z: 271.5, yaw: 90.0 }
+  hospital:
+    name: "병원"
+    material: PAPER
+    model_data: 0
+    location: { world: "other", x: -1091.5, y: 56.0, z: 686.5, yaw: -90.0 }
+  north_shopping_street:
+    name: "북쪽 상가거리"
+    material: PAPER
+    model_data: 1119
+    location: { world: "other", x: -1634.5, y: 56.0, z: -593.5, yaw: 180.0 }
+  police_office:
+    name: "경찰청"
+    material: PAPER
+    model_data: 1111
+    location: { world: "other", x: -1057.5, y: 56.0, z: 449.5, yaw: -90.0 }
+  prosecutors_office:
+    name: "검찰청"
+    material: PAPER
+    model_data: 1114
+    location: { world: "other", x: -1218.5, y: 56.0, z: 463.5, yaw: 90.0 }
+  sbc:
+    name: "SBC"
+    material: PAPER
+    model_data: 1100
+    location: { world: "other", x: -1322.5, y: 56.0, z: 710.5, yaw: 90.0 }
+  sostco:
+    name: "소스트코"
+    material: PAPER
+    model_data: 1118
+    location: { world: "other", x: -901.5, y: 56.0, z: 295.5, yaw: -90.0 }
+  sports_complex:
+    name: "종합경기장"
+    material: PAPER
+    model_data: 1104
+    location: { world: "other", x: -1006.5, y: 56.0, z: -201.5, yaw: 180.0 }
+  townhouse_complex:
+    name: "빌라 단지"
+    material: PAPER
+    model_data: 1101
+    location: { world: "other", x: -1679.5, y: 56.0, z: 474.5, yaw: 90.0 }
+  train_station:
+    name: "기차역"
+    material: PAPER
+    model_data: 1106
+    location: { world: "other", x: -1296.5, y: 56.0, z: -611.5, yaw: 180.0 }
+  university:
+    name: "대학교"
+    material: PAPER
+    model_data: 1115
+    location: { world: "other", x: -1695.5, y: 56.0, z: -174.5, yaw: -135.0 }
+  wedding_hall:
+    name: "결혼식장"
+    material: PAPER
+    model_data: 1103
+    location: { world: "other", x: -1201.5, y: 56.0, z: -265.5, yaw: 180.0 }
+
+# 지도에는 정류장 키와 슬롯 번호만 배치합니다. navigation은 previous/next만 사용합니다.
+maps:
+  map_0_0:
+    title: "\uE002"
+    navigation: { next: "map_0_1" }
+    placements: { hall_of_fame: 9, townhouse_complex: 12, high_school: 14, arts_association: 19, apartments_a_south: 22, apartments_a_north: 24, central_shopping_street: 32, central_square: 34, sbc: 37 }
+  map_0_1:
+    title: "\uE002"
+    navigation: { previous: "map_0_0", next: "map_1_0" }
+    placements: { harbor: 7, university: 10, north_shopping_street: 23, city_hall: 28 }
+  map_1_0:
+    title: "\uE003"
+    navigation: { previous: "map_0_1", next: "map_1_1" }
+    placements: { fire_agency: 1, apartments_b: 6, prosecutors_office: 13, hospital: 19, police_office: 22, court: 37, assembly: 40, sostco: 41 }
+  map_1_1:
+    title: "\uE004"
+    navigation: { previous: "map_1_0" }
+    placements: { train_station: 5, wedding_hall: 11, sports_complex: 28 }

@@ -1,11 +1,10 @@
 package kr.shkworld.shktown.database.repository;
 
-import kr.shkworld.shktown.core.model.Account;
-import kr.shkworld.shktown.core.model.AccountType;
-import kr.shkworld.shktown.core.repository.AccountRepository;
+import kr.shkworld.shktown.core.economy.model.Account;
+import kr.shkworld.shktown.core.economy.model.AccountType;
+import kr.shkworld.shktown.core.economy.repository.AccountRepository;
 import kr.shkworld.shktown.database.DatabaseManager;
-
-import org.bukkit.plugin.java.JavaPlugin;
+import kr.shkworld.shktown.database.UuidBinaryConverter;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,106 +18,118 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 public class AccountRepositoryImpl implements AccountRepository {
-    private final JavaPlugin plugin;
-
-    public AccountRepositoryImpl(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
 
     @Override
-    public CompletableFuture<Void> saveAccount(Account account) {
-        return CompletableFuture.runAsync(() -> {
-            try {
-                saveAccountSync(account);
-            } catch (Exception e) {
-                throw new CompletionException(e);
+    public void saveAccountSync(Account account) throws SQLException {
+        synchronized (account) {
+            String sql = "INSERT INTO accounts (account_number, owner_uuid, account_type, balance) " +
+                    "VALUES (?, ?, ?, ?) " +
+                    "ON DUPLICATE KEY UPDATE owner_uuid = VALUES(owner_uuid), account_type = VALUES(account_type)";
+
+            try (Connection connection = DatabaseManager.getInstance().getConnection();
+                 PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, account.getAccountNumber());
+                preparedStatement.setBytes(2, UuidBinaryConverter.toBytes(account.getOwnerUuid()));
+                preparedStatement.setInt(3, account.getAccountType().getCode());
+                preparedStatement.setBigDecimal(4, account.getBalance());
+                preparedStatement.executeUpdate();
             }
-        });
-    }
-
-    @Override
-    public void saveAccountSync(Account account) {
-        String sql = "INSERT INTO accounts (account_number, owner_uuid, account_type, balance) " +
-                     "VALUES (?, ?, ?, ?) " +
-                     "ON DUPLICATE KEY UPDATE " +
-                     "balance = ?";
-
-        try (Connection conn = DatabaseManager.getInstance().getConnection();
-             PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
-            preparedStatement.setString(1, account.getAccountNumber());
-            preparedStatement.setString(2, account.getOwnerUUID().toString());
-            preparedStatement.setInt(3, account.getAccountType().getCode());
-            preparedStatement.setBigDecimal(4, account.getBalance());
-            preparedStatement.setBigDecimal(5, account.getBalance());
-            preparedStatement.executeUpdate();
-
-        } catch (SQLException e) {
-            plugin.getLogger().severe("DB에 UUID " + account.getOwnerUUID().toString() + "님의 계좌번호 " + account.getAccountNumber() + "의 데이터를 저장하던 중 오류가 발생하였습니다.\n" + e.getMessage());
-            throw new RuntimeException(e);
-
         }
     }
 
     @Override
-    public CompletableFuture<Optional<Account>> findByNumber(String accountNumber) {
-        return CompletableFuture.supplyAsync(() -> {
-            String sql = "SELECT owner_uuid, account_type, balance " +
-                         "FROM accounts " +
-                         "WHERE account_number = ?";
-
-            try (Connection conn = DatabaseManager.getInstance().getConnection();
-                 PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
-                preparedStatement.setString(1, accountNumber);
-
-                try (ResultSet rs = preparedStatement.executeQuery()) {
-                    while (rs.next()) {
-                        return Optional.of(new Account(
-                                rs.getObject("owner_uuid", UUID.class),
-                                AccountType.fromCode(rs.getInt("account_type")),
-                                accountNumber,
-                                rs.getBigDecimal("balance")
-                        ));
-                    }
-                }
-
+    public CompletableFuture<Void> saveAccountAsync(Account account) {
+        return CompletableFuture.runAsync(() -> {
+            try {
+                saveAccountSync(account);
             } catch (SQLException e) {
-                plugin.getLogger().severe("DB에서 계좌번호 " + accountNumber + "의 데이터를 불러오던 중 오류가 발생하였습니다.\n" + e.getMessage());
-                throw new CompletionException(e);
-
+                throw new CompletionException("Account 비동기 저장 중 DB 에러 발생: " + account.getAccountNumber(), e);
             }
-            return Optional.empty();
         });
     }
 
     @Override
-    public CompletableFuture<List<Account>> findAllByOwner(UUID uuid) {
-        return CompletableFuture.supplyAsync(() -> {
-            List<Account> accounts = new ArrayList<>();
-            String sql = "SELECT account_number, account_type, balance " +
-                         "FROM accounts " +
-                         "WHERE owner_uuid = ?";
+    public Optional<Account> loadAccountByNumberSync(String accountNumber) throws SQLException {
+        String sql = "SELECT owner_uuid, account_type, balance FROM accounts WHERE account_number = ?";
 
-            try (Connection conn = DatabaseManager.getInstance().getConnection();
-                 PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
-                preparedStatement.setString(1, uuid.toString());
+        try (Connection connection = DatabaseManager.getInstance().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, accountNumber);
 
-                try (ResultSet rs = preparedStatement.executeQuery()) {
-                    while (rs.next()) {
-                        accounts.add(new Account(
-                                uuid,
-                                AccountType.fromCode(rs.getInt("account_type")),
-                                rs.getString("account_number"),
-                                rs.getBigDecimal("balance")
-                        ));
-                    }
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return Optional.of(toAccount(resultSet, accountNumber));
                 }
-
-            } catch (SQLException e) {
-                plugin.getLogger().severe("DB에서 UUID " + uuid.toString() + "의 데이터를 불러오던 중 오류가 발생하였습니다.\n" + e.getMessage());
-                throw new CompletionException(e);
-
             }
-            return accounts;
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public CompletableFuture<Optional<Account>> loadAccountByNumberAsync(String accountNumber) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return loadAccountByNumberSync(accountNumber);
+            } catch (SQLException e) {
+                throw new CompletionException("계좌번호로 Account 비동기 조회 중 DB 에러 발생: " + accountNumber, e);
+            }
         });
+    }
+
+    @Override
+    public List<Account> loadAccountByOwnerSync(UUID ownerUuid) throws SQLException {
+        String sql = "SELECT account_number, account_type, balance FROM accounts WHERE owner_uuid = ?";
+        List<Account> accounts = new ArrayList<>();
+
+        try (Connection connection = DatabaseManager.getInstance().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setBytes(1, UuidBinaryConverter.toBytes(ownerUuid));
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    accounts.add(new Account(
+                            resultSet.getString("account_number"),
+                            ownerUuid,
+                            AccountType.fromCode(resultSet.getInt("account_type")),
+                            resultSet.getBigDecimal("balance")
+                    ));
+                }
+            }
+        }
+        return accounts;
+    }
+
+    @Override
+    public CompletableFuture<List<Account>> loadAccountByOwnerAsync(UUID ownerUuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return loadAccountByOwnerSync(ownerUuid);
+            } catch (SQLException e) {
+                throw new CompletionException("소유자 UUID로 Account 비동기 조회 중 DB 에러 발생: " + ownerUuid, e);
+            }
+        });
+    }
+
+    @Override
+    public CompletableFuture<Void> deleteAccount(String accountNumber) {
+        return CompletableFuture.runAsync(() -> {
+            String sql = "DELETE FROM accounts WHERE account_number = ?";
+            try (Connection connection = DatabaseManager.getInstance().getConnection();
+                 PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, accountNumber);
+                preparedStatement.executeUpdate();
+            } catch (SQLException e) {
+                throw new CompletionException("Account 비동기 삭제 중 DB 에러 발생: " + accountNumber, e);
+            }
+        });
+    }
+
+    private Account toAccount(ResultSet resultSet, String accountNumber) throws SQLException {
+        return new Account(
+                accountNumber,
+                UuidBinaryConverter.fromBytes(resultSet.getBytes("owner_uuid")),
+                AccountType.fromCode(resultSet.getInt("account_type")),
+                resultSet.getBigDecimal("balance")
+        );
     }
 }

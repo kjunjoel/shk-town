@@ -1,149 +1,227 @@
 package kr.shkworld.shktown.database.repository;
 
-import kr.shkworld.shktown.core.model.User;
-import kr.shkworld.shktown.core.repository.UserRepository;
+import kr.shkworld.shktown.core.economy.model.CashReason;
+import kr.shkworld.shktown.core.economy.model.User;
+import kr.shkworld.shktown.core.economy.repository.UserRepository;
 import kr.shkworld.shktown.database.DatabaseManager;
-
-import org.bukkit.plugin.java.JavaPlugin;
+import kr.shkworld.shktown.database.UuidBinaryConverter;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Timestamp;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 public class UserRepositoryImpl implements UserRepository {
-    private final JavaPlugin plugin;
-
-    public UserRepositoryImpl(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
 
     @Override
-    public CompletableFuture<Void> saveUser(User user) {
-        return CompletableFuture.runAsync(() -> {
-            try {
-                saveUserSync(user);
-            } catch (Exception e) {
-                throw new CompletionException(e);
+    public void saveUserSync(User user) throws SQLException {
+        synchronized (user) {
+            String sql = "INSERT INTO users (uuid, name, cash, last_login) VALUES (?, ?, ?, ?) " +
+                    "ON DUPLICATE KEY UPDATE name = ?, last_login = ?";
+
+            try (Connection connection = DatabaseManager.getInstance().getConnection();
+                 PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setBytes(1, UuidBinaryConverter.toBytes(user.getUuid()));
+                preparedStatement.setString(2, user.getName());
+                preparedStatement.setBigDecimal(3, user.getCash());
+                preparedStatement.setTimestamp(4, toTimestamp(user.getLastLogin()));
+
+                preparedStatement.setString(5, user.getName());
+                preparedStatement.setTimestamp(6, toTimestamp(user.getLastLogin()));
+
+                preparedStatement.executeUpdate();
             }
-        });
-    }
-
-    @Override
-    public void saveUserSync(User user) {
-        String sql = "INSERT INTO users (uuid, name, last_login) " +
-                     "VALUES (?, ?, NOW()) " +
-                     "ON DUPLICATE KEY UPDATE " +
-                     "name = ?, cash = ?, town_id = ?, nation_id = ?, last_login = NOW()";
-
-        try (Connection conn = DatabaseManager.getInstance().getConnection();
-             PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
-            preparedStatement.setString(1, user.getUUID().toString());
-            preparedStatement.setString(2, user.getName());
-            preparedStatement.setString(3, user.getName());
-            preparedStatement.setBigDecimal(4, user.getCash());
-            preparedStatement.setLong(5, user.getTownID());
-            preparedStatement.setLong(6, user.getNationID());
-            preparedStatement.executeUpdate();
-
-        } catch (SQLException e) {
-            plugin.getLogger().severe("DB에 " + user.getName() +" 님의 데이터를 저장하던 중 오류가 발생하였습니다.\n" + e.getMessage());
-            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public CompletableFuture<Optional<User>> loadUser(UUID uuid) {
-        return CompletableFuture.supplyAsync(() -> {
-            String sql = "SELECT name, cash, town_id, nation_id " +
-                         "FROM users " +
-                         "WHERE uuid = ?";
-            try (Connection conn = DatabaseManager.getInstance().getConnection();
-                 PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
-                preparedStatement.setString(1, uuid.toString());
-
-                try (ResultSet rs = preparedStatement.executeQuery()) {
-                    if (rs.next()) {
-                        String name = rs.getString("name");
-                        BigDecimal cash = rs.getBigDecimal("cash");
-                        long townID = rs.getLong("town_id");
-                        long nationID = rs.getLong("nation_id");
-
-                        User user = new User(uuid, name, cash, new ArrayList<>());
-                        user.setTownID(townID);
-                        user.setNationID(nationID);
-
-                        return Optional.of(user);
-                    }
-                }
-
+    public CompletableFuture<Void> saveUserAsync(User user) {
+        return CompletableFuture.runAsync(() -> {
+            try {
+                saveUserSync(user);
             } catch (SQLException e) {
-                plugin.getLogger().severe("DB에서 UUID " + uuid.toString() + "의 데이터를 불러오던 중 오류가 발생하였습니다.\n" + e.getMessage());
-                throw new CompletionException(e);
-
+                throw new CompletionException("User 비동기 저장 중 DB 에러 발생: " + user.getUuid(), e);
             }
+        });
+    }
+
+    @Override
+    public Optional<User> loadUserSync(UUID uuid) throws SQLException {
+        try (Connection connection = DatabaseManager.getInstance().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM users WHERE uuid = ?")) {
+            preparedStatement.setBytes(1, UuidBinaryConverter.toBytes(uuid));
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    User user = new User(
+                            uuid,
+                            resultSet.getString("name"),
+                            resultSet.getBigDecimal("cash"),
+                            toLocalDateTime(resultSet.getTimestamp("last_login")),
+                            toLocalDateTime(resultSet.getTimestamp("first_login"))
+                    );
+                    return Optional.of(user);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public CompletableFuture<Optional<User>> loadUserAsync(UUID uuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return loadUserSync(uuid);
+            } catch (SQLException e) {
+                throw new CompletionException("User 비동기 조회 중 DB 에러 발생: " + uuid, e);
+            }
+        });
+    }
+
+    @Override
+    public Optional<User> addCashSync(UUID uuid, BigDecimal amount, CashReason reason, String detail) throws SQLException {
+        if (uuid == null || amount == null || amount.compareTo(BigDecimal.ZERO) <= 0 || reason == null) {
             return Optional.empty();
-        });
+        }
+        return adjustCashSync(uuid, amount, reason, detail);
     }
-    
+
     @Override
-    public CompletableFuture<List<UUID>> findUUIDsByTownID(long townID) {
+    public CompletableFuture<Optional<User>> addCashAsync(UUID uuid, BigDecimal amount, CashReason reason, String detail) {
         return CompletableFuture.supplyAsync(() -> {
-            String sql = "SELECT uuid " +
-                         "FROM users " +
-                         "WHERE town_id = ?";
-            List<UUID> list = new ArrayList<>();
-
-            try (Connection conn = DatabaseManager.getInstance().getConnection();
-                 PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
-                preparedStatement.setLong(1, townID);
-
-                try (ResultSet rs = preparedStatement.executeQuery()) {
-                    while (rs.next()) {
-                        list.add(UUID.fromString(rs.getString("uuid")));
-                    }
-                }
-
+            try {
+                return addCashSync(uuid, amount, reason, detail);
             } catch (SQLException e) {
-                plugin.getLogger().severe("DB에서 마을 ID " + townID + "의 데이터를 불러오던 중 오류가 발생하였습니다.\n" + e.getMessage());
-                throw new CompletionException(e);
-
+                throw new CompletionException("Cash 비동기 지급 중 DB 에러 발생: " + uuid, e);
             }
-            return list;
         });
     }
 
     @Override
-    public CompletableFuture<List<UUID>> findUUIDsByNationID(long nationID) {
+    public Optional<User> subtractCashSync(UUID uuid, BigDecimal amount, CashReason reason, String detail) throws SQLException {
+        if (uuid == null || amount == null || amount.compareTo(BigDecimal.ZERO) <= 0 || reason == null) {
+            return Optional.empty();
+        }
+        return adjustCashSync(uuid, amount.negate(), reason, detail);
+    }
+
+    @Override
+    public CompletableFuture<Optional<User>> subtractCashAsync(UUID uuid, BigDecimal amount, CashReason reason, String detail) {
         return CompletableFuture.supplyAsync(() -> {
-            String sql = "SELECT uuid " +
-                         "FROM users " +
-                         "WHERE nation_id = ?";
-            List<UUID> list = new ArrayList<>();
+            try {
+                return subtractCashSync(uuid, amount, reason, detail);
+            } catch (SQLException e) {
+                throw new CompletionException("Cash 비동기 차감 중 DB 에러 발생: " + uuid, e);
+            }
+        });
+    }
 
-            try (Connection conn = DatabaseManager.getInstance().getConnection();
-                 PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
-                preparedStatement.setLong(1, nationID);
-
-                try (ResultSet rs = preparedStatement.executeQuery()) {
-                    while (rs.next()) {
-                        list.add(UUID.fromString(rs.getString("uuid")));
-                    }
+    private Optional<User> adjustCashSync(
+            UUID uuid,
+            BigDecimal signedAmount,
+            CashReason reason,
+            String detail
+    ) throws SQLException {
+        try (Connection connection = DatabaseManager.getInstance().getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                Optional<User> userOpt = lockUser(connection, uuid);
+                if (userOpt.isEmpty()) {
+                    connection.rollback();
+                    return Optional.empty();
                 }
 
-            } catch (SQLException e) {
-                plugin.getLogger().severe("DB에서 국가 ID " + nationID + "의 데이터를 불러오던 중 오류가 발생하였습니다.\n" + e.getMessage());
-                throw new CompletionException(e);
+                User user = userOpt.get();
+                BigDecimal balanceAfter = user.getCash().add(signedAmount);
+                if (balanceAfter.compareTo(BigDecimal.ZERO) < 0) {
+                    connection.rollback();
+                    return Optional.empty();
+                }
 
+                updateCash(connection, uuid, balanceAfter);
+                insertCashLog(connection, uuid, signedAmount, balanceAfter, reason, detail);
+                connection.commit();
+
+                return Optional.of(new User(
+                        uuid,
+                        user.getName(),
+                        balanceAfter,
+                        user.getLastLogin(),
+                        user.getFirstLogin()
+                ));
+            } catch (SQLException | RuntimeException e) {
+                rollback(connection, e);
+                throw e;
             }
-            return list;
-        });
+        }
+    }
+
+    private Optional<User> lockUser(Connection connection, UUID uuid) throws SQLException {
+        String sql = "SELECT name, cash, last_login, first_login FROM users WHERE uuid = ? FOR UPDATE";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setBytes(1, UuidBinaryConverter.toBytes(uuid));
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (!resultSet.next()) {
+                    return Optional.empty();
+                }
+                return Optional.of(new User(
+                        uuid,
+                        resultSet.getString("name"),
+                        resultSet.getBigDecimal("cash"),
+                        toLocalDateTime(resultSet.getTimestamp("last_login")),
+                        toLocalDateTime(resultSet.getTimestamp("first_login"))
+                ));
+            }
+        }
+    }
+
+    private void updateCash(Connection connection, UUID uuid, BigDecimal balanceAfter) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "UPDATE users SET cash = ? WHERE uuid = ?")) {
+            statement.setBigDecimal(1, balanceAfter);
+            statement.setBytes(2, UuidBinaryConverter.toBytes(uuid));
+            statement.executeUpdate();
+        }
+    }
+
+    private void insertCashLog(
+            Connection connection,
+            UUID uuid,
+            BigDecimal amount,
+            BigDecimal balanceAfter,
+            CashReason reason,
+            String detail
+    ) throws SQLException {
+        String sql = "INSERT INTO cash_logs (user_uuid, amount, balance_after, reason, detail) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setBytes(1, UuidBinaryConverter.toBytes(uuid));
+            statement.setBigDecimal(2, amount);
+            statement.setBigDecimal(3, balanceAfter);
+            statement.setString(4, reason.name());
+            statement.setString(5, detail);
+            statement.executeUpdate();
+        }
+    }
+
+    private void rollback(Connection connection, Exception original) {
+        try {
+            connection.rollback();
+        } catch (SQLException rollbackError) {
+            original.addSuppressed(rollbackError);
+        }
+    }
+
+    private Timestamp toTimestamp(java.time.LocalDateTime dateTime) {
+        return dateTime == null ? null : Timestamp.valueOf(dateTime);
+    }
+
+    private java.time.LocalDateTime toLocalDateTime(Timestamp timestamp) {
+        return timestamp == null ? null : timestamp.toLocalDateTime();
     }
 }
